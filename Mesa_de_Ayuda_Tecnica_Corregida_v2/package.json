@@ -1,0 +1,16 @@
+{
+  "name": "mesa-ayuda-tecnica",
+  "version": "1.0.0",
+  "private": true,
+  "description": "API REST académica para gestión de tickets y técnicos",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.22.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

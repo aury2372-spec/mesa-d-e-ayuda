@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mesa de Ayuda Técnica</title>
+  <style>
+    body{font-family:Arial,sans-serif;background:#f3f6fa;margin:0;color:#172033}
+    main{max-width:900px;margin:30px auto;padding:20px}
+    .seccion,.ticket{background:#fff;padding:20px;margin:16px 0;border-radius:12px;box-shadow:0 2px 8px #0001}
+    label{display:block;margin-top:12px;font-weight:bold}
+    input,select,textarea,button{box-sizing:border-box;width:100%;padding:10px;margin-top:5px}
+    textarea{min-height:100px}button{cursor:pointer;background:#155eef;color:white;border:0;border-radius:6px;margin-top:16px}
+    .secundario{background:#475467} .error{color:#b42318}.muted{color:#667085}
+    .fila{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media(max-width:600px){.fila{grid-template-columns:1fr}main{margin:10px;padding:12px}}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Mesa de Ayuda Técnica</h1>
+  <p>Registra un problema y consulta el estado de los tickets.</p>
+
+  <section class="seccion">
+    <h2>Crear ticket</h2>
+    <form id="formulario">
+      <label for="nombre">Nombre del usuario</label>
+      <input type="text" id="nombre" name="nombreSolicitante" placeholder="Ingrese su nombre">
+
+      <label for="titulo">Título del problema</label>
+      <input type="text" id="titulo" name="titulo" required maxlength="120">
+
+      <label for="descripcion">Descripción del problema</label>
+      <textarea id="descripcion" name="descripcion" required></textarea>
+
+      <div class="fila">
+        <div>
+          <label for="prioridad">Prioridad</label>
+          <select id="prioridad" name="prioridad" required>
+            <option value="">Seleccione</option>
+            <option value="baja">Baja</option>
+            <option value="media">Media</option>
+            <option value="alta">Alta</option>
+          </select>
+        </div>
+        <div>
+          <label for="tecnico">Asignar técnico (opcional)</label>
+          <select id="tecnico" name="tecnicoId">
+            <option value="">Sin asignar</option>
+          </select>
+        </div>
+      </div>
+
+      <label for="fecha">Fecha solicitada (opcional)</label>
+      <input type="date" id="fecha" name="fecha">
+      <button type="submit">Crear ticket</button>
+      <p id="mensajeFormulario" role="status"></p>
+    </form>
+  </section>
+
+  <section class="seccion">
+    <h2>Consultar tickets</h2>
+    <div class="fila">
+      <div>
+        <label for="filtroEstado">Filtrar por estado</label>
+        <select id="filtroEstado">
+          <option value="">Todos</option><option value="abierto">Abierto</option>
+          <option value="en atención">En atención</option><option value="cerrado">Cerrado</option>
+        </select>
+      </div>
+      <div>
+        <label for="filtroPrioridad">Filtrar por prioridad</label>
+        <select id="filtroPrioridad">
+          <option value="">Todas</option><option value="baja">Baja</option>
+          <option value="media">Media</option><option value="alta">Alta</option>
+        </select>
+      </div>
+    </div>
+    <button id="btnFiltrar" type="button">Aplicar filtros</button>
+    <button id="btnLimpiar" type="button" class="secundario">Limpiar filtros</button>
+    <div id="listaTickets" aria-live="polite">Cargando tickets...</div>
+  </section>
+
+  <p><a href="/admin.html">Ir al panel de administración de técnicos</a></p>
+</main>
+<script src="/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administración de técnicos</title>
+  <style>
+    body{font-family:Arial,sans-serif;background:#f3f6fa;margin:0;color:#172033}
+    main{max-width:850px;margin:30px auto;padding:20px}
+    section,.tecnico{background:white;padding:20px;margin:16px 0;border-radius:12px;box-shadow:0 2px 8px #0001}
+    label{display:block;margin-top:12px;font-weight:bold}
+    input,select,button{box-sizing:border-box;width:100%;padding:10px;margin-top:5px}
+    button{cursor:pointer;background:#155eef;color:white;border:0;border-radius:6px;margin-top:12px}
+    button.secundario{background:#475467}.error{color:#b42318}
+    button.eliminar{background:#b42318}.fila{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media(max-width:600px){.fila{grid-template-columns:1fr}main{margin:10px;padding:12px}}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Panel de administración</h1>
+  <section>
+    <h2 id="tituloFormulario">Agregar técnico</h2>
+    <form id="formTecnico">
+      <label for="nombreTecnico">Nombre del técnico</label>
+      <input type="text" id="nombreTecnico" required>
+      <label for="especialidad">Especialidad</label>
+      <input type="text" id="especialidad" required>
+      <label for="estadoTecnico">Estado</label>
+      <select id="estadoTecnico" required>
+        <option value="Disponible">Disponible</option>
+        <option value="Ocupado">Ocupado</option>
+        <option value="Inactivo">Inactivo</option>
+      </select>
+      <button type="submit" id="btnGuardar">Agregar técnico</button>
+      <button type="button" id="btnCancelar" hidden class="secundario">Cancelar edición</button>
+      <p id="mensaje" role="status"></p>
+    </form>
+  </section>
+  <section>
+    <h2>Técnicos registrados</h2>
+    <div id="listaTecnicos">Cargando técnicos...</div>
+  </section>
+  <p><a href="/">Volver a Mesa de Ayuda</a></p>
+</main>
+<script>
+const form = document.getElementById('formTecnico');
+const lista = document.getElementById('listaTecnicos');
+const mensaje = document.getElementById('mensaje');
+let idEditando = null;
+
+async function pedirJSON(url, opciones = {}) {
+  const respuesta = await fetch(url, opciones);
+  let datos;
+  try {
+    datos = await respuesta.json();
+  } catch (error) {
+    throw new Error('El servidor no respondió con JSON válido. Verifique que la API esté activa.');
+  }
+  if (!respuesta.ok) throw new Error(datos.mensaje || 'No se pudo completar la solicitud.');
+  return datos;
+}
+
+async function cargarTecnicos() {
+  try {
+    const datos = await pedirJSON('/api/tecnicos');
+    lista.innerHTML = '';
+    if (!datos.tecnicos.length) {
+      lista.textContent = 'No hay técnicos registrados.';
+      return;
+    }
+    datos.tecnicos.forEach(tecnico => {
+      const tarjeta = document.createElement('article');
+      tarjeta.className = 'tecnico';
+      const titulo = document.createElement('h3');
+      titulo.textContent = `${tecnico.nombre} (#${tecnico.id})`;
+      const especialidad = document.createElement('p');
+      especialidad.textContent = `Especialidad: ${tecnico.especialidad}`;
+      const estado = document.createElement('p');
+      estado.textContent = `Estado: ${tecnico.estado}`;
+      const editar = document.createElement('button');
+      editar.textContent = 'Editar';
+      editar.addEventListener('click', () => {
+        idEditando = tecnico.id;
+        document.getElementById('nombreTecnico').value = tecnico.nombre;
+        document.getElementById('especialidad').value = tecnico.especialidad;
+        document.getElementById('estadoTecnico').value = tecnico.estado;
+        document.getElementById('tituloFormulario').textContent = 'Editar técnico';
+        document.getElementById('btnGuardar').textContent = 'Guardar cambios';
+        document.getElementById('btnCancelar').hidden = false;
+      });
+      const eliminar = document.createElement('button');
+      eliminar.textContent = 'Eliminar';
+      eliminar.className = 'eliminar';
+      eliminar.addEventListener('click', async () => {
+        if (!confirm(`¿Eliminar al técnico ${tecnico.nombre}?`)) return;
+        try {
+          await pedirJSON(`/api/tecnicos/${tecnico.id}`, { method: 'DELETE' });
+          if (idEditando === tecnico.id) cancelarEdicion();
+          await cargarTecnicos();
+        } catch (error) {
+          alert(error.message);
+        }
+      });
+      tarjeta.append(titulo, especialidad, estado, editar, eliminar);
+      lista.appendChild(tarjeta);
+    });
+  } catch (error) {
+    lista.textContent = `Error: ${error.message}`;
+  }
+}
+
+function cancelarEdicion() {
+  idEditando = null;
+  form.reset();
+  document.getElementById('tituloFormulario').textContent = 'Agregar técnico';
+  document.getElementById('btnGuardar').textContent = 'Agregar técnico';
+  document.getElementById('btnCancelar').hidden = true;
+}
+
+form.addEventListener('submit', async event => {
+  event.preventDefault();
+  mensaje.className = '';
+  const body = {
+    nombre: document.getElementById('nombreTecnico').value.trim(),
+    especialidad: document.getElementById('especialidad').value.trim(),
+    estado: document.getElementById('estadoTecnico').value
+  };
+  const url = idEditando === null ? '/api/tecnicos' : `/api/tecnicos/${idEditando}`;
+  const method = idEditando === null ? 'POST' : 'PUT';
+  try {
+    await pedirJSON(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    mensaje.textContent = idEditando === null ? 'Técnico agregado correctamente.' : 'Técnico actualizado correctamente.';
+    form.reset();
+    idEditando = null;
+    document.getElementById('tituloFormulario').textContent = 'Agregar técnico';
+    document.getElementById('btnGuardar').textContent = 'Agregar técnico';
+    document.getElementById('btnCancelar').hidden = true;
+    await cargarTecnicos();
+  } catch (error) {
+    mensaje.textContent = `Error: ${error.message}`;
+    mensaje.className = 'error';
+  }
+});
+
+document.getElementById('btnCancelar').addEventListener('click', cancelarEdicion);
+cargarTecnicos();
+</script>
+</body>
+</html>
